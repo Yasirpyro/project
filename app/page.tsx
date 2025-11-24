@@ -29,7 +29,7 @@ export default function Home() {
             AI-Powered Intelligence
           </div>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 bg-clip-text text-transparent">
-            University Operating System
+            The Intelligence Layer for Universities
           </h1>
           <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
             Transform student success with AI-driven insights, personalized pathways, and intelligent interventions that keep every student on track to graduation.

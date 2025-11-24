@@ -62,7 +62,7 @@ export function Navigation({ role }: NavigationProps) {
               <div className="p-2 rounded-lg bg-blue-600">
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
-              <span className="font-bold text-xl hidden sm:inline">University AI</span>
+              <span className="font-bold text-xl hidden sm:inline">Scholaris</span>
             </Link>
 
             {navLinks.length > 0 && (
