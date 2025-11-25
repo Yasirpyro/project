@@ -22,8 +22,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
-  const initialRole = searchParams.get('role') as 'advisor' | 'student' || 'advisor';
-  const [activeTab, setActiveTab] = useState(initialRole);
+  const roleFromQuery = searchParams.get('role');
+  const lockedRole = roleFromQuery === 'advisor' || roleFromQuery === 'student' ? roleFromQuery : null;
+  const initialRole = (lockedRole ?? 'advisor') as 'advisor' | 'student';
+  const [activeTab, setActiveTab] = useState<'advisor' | 'student'>(initialRole);
 
   const handleLogin = async (e: React.FormEvent, role: 'advisor' | 'student') => {
     e.preventDefault();
@@ -55,6 +57,64 @@ export default function LoginPage() {
     }, 1500);
   };
 
+  const renderForm = (role: 'advisor' | 'student') => {
+    const roleLabel = role === 'advisor' ? 'Advisor' : 'Student';
+    return (
+      <form onSubmit={(e) => handleLogin(e, role)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor={`${role}-email`}>Email</Label>
+          <Input
+            id={`${role}-email`}
+            type="email"
+            placeholder={`${role}@university.edu`}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${role}-password`}>Password</Label>
+          <Input
+            id={`${role}-password`}
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id={`remember-${role}`}
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+            />
+            <label
+              htmlFor={`remember-${role}`}
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Remember me
+            </label>
+          </div>
+          <Link href="#" className="text-sm text-blue-600 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            `Sign in as ${roleLabel}`
+          )}
+        </Button>
+      </form>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <Navigation />
@@ -72,125 +132,29 @@ export default function LoginPage() {
           <Card className="border-2 shadow-lg">
             <CardHeader>
               <CardTitle>Login</CardTitle>
-              <CardDescription>Choose your role and enter your credentials</CardDescription>
+              <CardDescription>
+                {lockedRole ? `Signed in as ${lockedRole === 'advisor' ? 'Advisor' : 'Student'}` : 'Choose your role and enter your credentials'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'advisor' | 'student')}>
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="advisor">Advisor</TabsTrigger>
-                  <TabsTrigger value="student">Student</TabsTrigger>
-                </TabsList>
+              {lockedRole ? (
+                <div className="space-y-6">
+                  <div className="rounded-xl bg-muted/40 px-4 py-3 text-sm font-medium">
+                    You are signing in as {lockedRole === 'advisor' ? 'Advisor' : 'Student'}
+                  </div>
+                  {renderForm(lockedRole)}
+                </div>
+              ) : (
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'advisor' | 'student')}>
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="advisor">Advisor</TabsTrigger>
+                    <TabsTrigger value="student">Student</TabsTrigger>
+                  </TabsList>
 
-                <TabsContent value="advisor">
-                  <form onSubmit={(e) => handleLogin(e, 'advisor')} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="advisor-email">Email</Label>
-                      <Input
-                        id="advisor-email"
-                        type="email"
-                        placeholder="advisor@university.edu"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="advisor-password">Password</Label>
-                      <Input
-                        id="advisor-password"
-                        type="password"
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="remember-advisor"
-                          checked={rememberMe}
-                          onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                        />
-                        <label
-                          htmlFor="remember-advisor"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Remember me
-                        </label>
-                      </div>
-                      <Link href="#" className="text-sm text-blue-600 hover:underline">
-                        Forgot password?
-                      </Link>
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Signing in...
-                        </>
-                      ) : (
-                        'Sign in as Advisor'
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="student">
-                  <form onSubmit={(e) => handleLogin(e, 'student')} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="student-email">Email</Label>
-                      <Input
-                        id="student-email"
-                        type="email"
-                        placeholder="student@university.edu"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="student-password">Password</Label>
-                      <Input
-                        id="student-password"
-                        type="password"
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="remember-student"
-                          checked={rememberMe}
-                          onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                        />
-                        <label
-                          htmlFor="remember-student"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Remember me
-                        </label>
-                      </div>
-                      <Link href="#" className="text-sm text-blue-600 hover:underline">
-                        Forgot password?
-                      </Link>
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Signing in...
-                        </>
-                      ) : (
-                        'Sign in as Student'
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+                  <TabsContent value="advisor">{renderForm('advisor')}</TabsContent>
+                  <TabsContent value="student">{renderForm('student')}</TabsContent>
+                </Tabs>
+              )}
 
               <div className="mt-6 text-center text-sm text-muted-foreground">
                 <p>Demo credentials: Use any email and password</p>

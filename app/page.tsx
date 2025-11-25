@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, BarChart3, Brain, GraduationCap, Target, Users, Zap } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { FlowButton } from '@/components/ui/flow-button';
+import { GlowText } from '@/components/glow-text';
 
 const DotScreenShader = dynamic(() => import('@/components/dot-screen-shader').then(mod => ({ default: mod.DotScreenShader })), {
   ssr: false
@@ -31,9 +32,10 @@ export default function Home() {
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 bg-clip-text text-transparent">
             The Intelligence Layer for Universities
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-            Transform student success with AI-driven insights, personalized pathways, and intelligent interventions that keep every student on track to graduation.
-          </p>
+          <GlowText
+            className="text-xl text-muted-foreground mb-8 leading-relaxed"
+            text="Transform student success with AI-driven insights, personalized pathways, and intelligent interventions that keep every student on track to graduation."
+          />
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <FlowButton href="/login?role=advisor" text="Advisor Login" className="w-full sm:w-auto" />
             <FlowButton href="/login?role=student" text="Student Login" variant="secondary" className="w-full sm:w-auto" />
