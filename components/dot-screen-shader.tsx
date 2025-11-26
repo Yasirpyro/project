@@ -1,10 +1,74 @@
 'use client'
 
-import { useMemo, useEffect, useRef } from 'react'
+import { useMemo, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { shaderMaterial, useTrailTexture } from '@react-three/drei'
 import { useTheme } from 'next-themes'
 import * as THREE from 'three'
+
+type DotThemeColors = {
+  dotColor: string
+  bgColor: string
+  dotOpacity: number
+}
+
+const getThemeColors = (themeKey?: string | null): DotThemeColors => {
+  switch (themeKey) {
+    case 'light':
+      return {
+        dotColor: '#2563eb',
+        bgColor: '#F4F6FB',
+        dotOpacity: 0.16
+      }
+    case 'dark':
+    default:
+      return {
+        dotColor: '#f5f5f5',
+        bgColor: '#05070b',
+        dotOpacity: 0.06
+      }
+  }
+}
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const value = hex.replace('#', '')
+  const normalized = value.length === 3 ? value.split('').map((char) => char + char).join('') : value
+  const int = parseInt(normalized, 16)
+  const r = (int >> 16) & 255
+  const g = (int >> 8) & 255
+  const b = int & 255
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+// Guard Canvas creation inside sandboxed previews where WebGL is disabled.
+const checkWebGLSupport = () => {
+  if (typeof window === 'undefined') return false
+  try {
+    const canvas = document.createElement('canvas')
+    const gl =
+      canvas.getContext('webgl2') ||
+      canvas.getContext('webgl') ||
+      canvas.getContext('experimental-webgl')
+
+    const supported = Boolean(gl)
+    if (gl && 'getExtension' in gl) {
+      gl.getExtension('WEBGL_lose_context')?.loseContext()
+    }
+    return supported
+  } catch (error) {
+    return false
+  }
+}
+
+const useWebGLSupport = () => {
+  const [supported, setSupported] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    setSupported(checkWebGLSupport())
+  }, [])
+
+  return supported
+}
 
 const DotMaterial = shaderMaterial(
   {
@@ -98,39 +162,16 @@ const DotMaterial = shaderMaterial(
   `
 )
 
-function Scene() {
+type SceneProps = {
+  themeColors: DotThemeColors
+}
+
+function Scene({ themeColors }: SceneProps) {
   const size = useThree((s) => s.size)
   const viewport = useThree((s) => s.viewport)
-  const { theme, resolvedTheme } = useTheme()
   
   const rotation = 0
   const gridSize = 100
-
-  const getThemeColors = () => {
-    const currentTheme = resolvedTheme || theme
-    switch (currentTheme) {
-      case 'dark':
-        return {
-          dotColor: '#f5f5f5',
-          bgColor: '#05070b',
-          dotOpacity: 0.06
-        }
-      case 'light':
-        return {
-          dotColor: '#2563eb',
-          bgColor: '#F4F6FB',
-          dotOpacity: 0.16
-        }
-      default:
-        return {
-          dotColor: '#f5f5f5',
-          bgColor: '#05070b',
-          dotOpacity: 0.06
-        }
-    }
-  }
-
-  const themeColors = getThemeColors()
 
   const [trail, onMove] = useTrailTexture({
     size: 512,
@@ -146,7 +187,7 @@ function Scene() {
 
   const pointerTarget = useRef(new THREE.Vector2(0.5, 0.5))
   const pointerCurrent = useRef(new THREE.Vector2(0.5, 0.5))
-  const rafRef = useRef<number>()
+  const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -157,7 +198,7 @@ function Scene() {
       if (pointerCurrent.current.distanceTo(pointerTarget.current) > 0.001) {
         rafRef.current = requestAnimationFrame(smoothStep)
       } else {
-        rafRef.current = undefined
+        rafRef.current = null
       }
     }
 
@@ -166,7 +207,7 @@ function Scene() {
         event.clientX / window.innerWidth,
         event.clientY / window.innerHeight
       )
-      if (!rafRef.current) {
+      if (rafRef.current === null) {
         rafRef.current = requestAnimationFrame(smoothStep)
       }
     }
@@ -174,7 +215,10 @@ function Scene() {
     window.addEventListener('pointermove', handlePointerMove)
     return () => {
       window.removeEventListener('pointermove', handlePointerMove)
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
     }
   }, [onMove])
 
@@ -186,7 +230,7 @@ function Scene() {
     dotMaterial.uniforms.dotColor.value.setHex(themeColors.dotColor.replace('#', '0x'))
     dotMaterial.uniforms.bgColor.value.setHex(themeColors.bgColor.replace('#', '0x'))
     dotMaterial.uniforms.dotOpacity.value = themeColors.dotOpacity
-  }, [theme, resolvedTheme, dotMaterial, themeColors])
+  }, [dotMaterial, themeColors])
 
   useFrame((state) => {
     dotMaterial.uniforms.time.value = state.clock.elapsedTime
@@ -210,6 +254,23 @@ function Scene() {
 }
 
 export const DotScreenShader = () => {
+  const webglSupported = useWebGLSupport()
+  const { theme, resolvedTheme } = useTheme()
+  const themeKey = resolvedTheme || theme
+  const themeColors = useMemo(() => getThemeColors(themeKey), [themeKey])
+
+  const fallbackStyle = useMemo<CSSProperties>(() => ({
+    width: '100%',
+    height: '100%',
+    borderRadius: 'inherit',
+    backgroundColor: themeColors.bgColor,
+    backgroundImage: `radial-gradient(circle at 25% 20%, ${hexToRgba(themeColors.dotColor, 0.18)}, transparent 45%), radial-gradient(circle at 75% 15%, ${hexToRgba(themeColors.dotColor, 0.1)}, transparent 55%), linear-gradient(135deg, ${themeColors.bgColor}, ${themeColors.bgColor})`
+  }), [themeColors])
+
+  if (webglSupported !== true) {
+    return <div style={fallbackStyle} aria-hidden role="presentation" />
+  }
+
   return (
     <Canvas
       gl={{
@@ -218,7 +279,7 @@ export const DotScreenShader = () => {
         outputColorSpace: THREE.SRGBColorSpace,
         toneMapping: THREE.NoToneMapping
       }}>
-      <Scene />
+      <Scene themeColors={themeColors} />
     </Canvas>
   )
 }
