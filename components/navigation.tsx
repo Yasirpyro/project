@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, GraduationCap, LogOut, Menu, Moon, Settings, Sun, User, X } from 'lucide-react';
+import Image from 'next/image';
+import { Bell, LogOut, Menu, Moon, Settings, Sun, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -58,10 +59,15 @@ export function Navigation({ role }: NavigationProps) {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-blue-600">
-                <GraduationCap className="w-6 h-6 text-white" />
-              </div>
+            <Link href="/" className="group flex items-center gap-3">
+              <Image
+                src="/logo.png"
+                alt="Scholaris logo"
+                width={40}
+                height={40}
+                priority
+                className="h-10 w-10 object-contain drop-shadow-[0_4px_12px_rgba(30,64,175,0.45)] dark:drop-shadow-[0_4px_12px_rgba(147,197,253,0.35)] transition-transform duration-200 group-hover:scale-105"
+              />
               <span className="font-bold text-xl hidden sm:inline">Scholaris</span>
             </Link>
 

@@ -4,11 +4,19 @@ import { Inter } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from 'next-themes';
 
+const siteTitle = 'University AI - Intelligent Operating System';
+const siteDescription = 'AI-powered platform for student success and career pathways';
+
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'University AI - Intelligent Operating System',
-  description: 'AI-powered platform for student success and career pathways',
+  title: siteTitle,
+  description: siteDescription,
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({
