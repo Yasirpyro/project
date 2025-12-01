@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { GraduationCap, Loader2 } from 'lucide-react';
+
 import { Navigation } from '@/components/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,8 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { GraduationCap, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { signInWithRole } from '@/supabaseclient';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,20 +43,37 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const result = await signInWithRole({ email, password, role });
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      if (!('role' in result) || !result.role) {
+        throw new Error('Unable to determine account role.');
+      }
+
       toast({
         title: 'Login Successful',
-        description: `Welcome back! Redirecting to ${role} dashboard...`,
+        description: `Welcome back! Redirecting to ${result.role} dashboard...`,
       });
 
-      setTimeout(() => {
-        if (role === 'advisor') {
-          router.push('/advisor/dashboard');
-        } else {
-          router.push('/student/pathway');
-        }
-      }, 1000);
-    }, 1500);
+      if (result.role === 'advisor') {
+        router.push('/advisor/dashboard');
+      } else {
+        router.push('/student/pathway');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to sign in. Please try again.';
+      toast({
+        title: 'Authentication Error',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderForm = (role: 'advisor' | 'student') => {
