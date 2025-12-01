@@ -13,7 +13,6 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithRole } from '@/supabaseclient';
 
 function LoginContent() {
   const router = useRouter();
@@ -44,6 +43,7 @@ function LoginContent() {
     setLoading(true);
 
     try {
+      const { signInWithRole } = await import('@/supabaseclient');
       const result = await signInWithRole({ email, password, role });
 
       if (result.error) {
