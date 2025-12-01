@@ -4,11 +4,22 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
+const hasSupabaseCredentials = Boolean(supabaseUrl && supabaseAnonKey)
+
+if (!hasSupabaseCredentials) {
 	console.warn('Supabase client initialized without credentials. Check your environment variables.')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabaseInstance = hasSupabaseCredentials ? createClient(supabaseUrl, supabaseAnonKey) : null
+
+export const supabase = supabaseInstance
+
+const requireSupabaseClient = () => {
+	if (!supabaseInstance) {
+		throw new Error('Supabase environment variables are not configured.')
+	}
+	return supabaseInstance
+}
 
 export const USER_ROLES = ['advisor', 'student']
 export const DEFAULT_ROLE = 'student'
@@ -29,15 +40,17 @@ const normalizeRole = (role) => {
 }
 
 export const getCurrentRole = async () => {
+	const client = requireSupabaseClient()
 	const {
 		data: { session }
-	} = await supabase.auth.getSession()
+	} = await client.auth.getSession()
 	const roleFromMetadata = session?.user?.app_metadata?.role
 	return normalizeRole(roleFromMetadata)
 }
 
 export const signInWithRole = async ({ email, password, role }) => {
-	const result = await supabase.auth.signInWithPassword({ email, password })
+	const client = requireSupabaseClient()
+	const result = await client.auth.signInWithPassword({ email, password })
 	if (result.error) return result
 
 	const normalizedRole = normalizeRole(result.data?.user?.app_metadata?.role)
@@ -64,4 +77,4 @@ export const requireRole = async (role) => {
 	return currentRole
 }
 
-export const signOut = () => supabase.auth.signOut()
+export const signOut = () => requireSupabaseClient().auth.signOut()
