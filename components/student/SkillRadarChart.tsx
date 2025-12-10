@@ -116,9 +116,9 @@ export function SkillRadarChart({
                       <p className="font-semibold mb-1">{payload[0].payload.skill}</p>
                       <p className="text-sm text-blue-600">Your Level: {payload[0].value}%</p>
                       <p className="text-sm text-red-600">Target: {payload[1]?.value}%</p>
-                      {payload[0].value < payload[1]?.value && (
+                      {typeof payload[0].value === 'number' && typeof payload[1]?.value === 'number' && payload[0].value < payload[1].value && (
                         <p className="text-sm text-muted-foreground mt-1">
-                          Gap: {payload[1]?.value - payload[0].value}%
+                          Gap: {payload[1].value - payload[0].value}%
                         </p>
                       )}
                     </div>
