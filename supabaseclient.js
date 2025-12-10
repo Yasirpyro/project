@@ -77,4 +77,12 @@ export const requireRole = async (role) => {
 	return currentRole
 }
 
+export const getRoleDashboard = (role) => {
+	const normalizedRole = normalizeRole(role)
+	if (normalizedRole === 'advisor') {
+		return '/advisor/dashboard'
+	}
+	return '/student/pathway'
+}
+
 export const signOut = () => requireSupabaseClient().auth.signOut()
